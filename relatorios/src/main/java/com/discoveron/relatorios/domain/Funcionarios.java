@@ -22,6 +22,10 @@ public class Funcionarios {
     @Enumerated(EnumType.STRING)
     private Nivel nivel;
     private String cargo;
+    private String senha;
+    private String login;
+    @Enumerated(EnumType.STRING)
+    private Ativo ativar;
 
 
 }

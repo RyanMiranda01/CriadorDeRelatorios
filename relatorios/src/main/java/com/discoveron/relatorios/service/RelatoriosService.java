@@ -1,12 +1,10 @@
 package com.discoveron.relatorios.service;
 
-import com.discoveron.relatorios.domain.Funcionarios;
 import com.discoveron.relatorios.domain.Periodo;
 import com.discoveron.relatorios.domain.Relatorios;
 import com.discoveron.relatorios.dto.relatorio.RelatorioCadastroDTO;
 import com.discoveron.relatorios.dto.relatorio.RelatorioEditar;
 import com.discoveron.relatorios.dto.relatorio.RelatoriosRespostasDTO;
-import com.discoveron.relatorios.repository.FuncionarioRepository;
 import com.discoveron.relatorios.repository.RelatorioRepository;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
@@ -14,7 +12,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.time.format.ResolverStyle;
@@ -51,7 +48,7 @@ public class RelatoriosService {
     }
 
     public RelatoriosRespostasDTO editarRelatorio(Long id, @Valid RelatorioEditar relatorioEditar) {
-        Relatorios relatorios = relatorioRepository.findById(id).orElseThrow(() -> new RuntimeException("Relatorio nao encontrado!"));
+        Relatorios relatorios = relatorioRepository.findById(id).orElseThrow(() -> new IllegalArgumentException("Relatorio nao encontrado!"));
 
         relatorios.setNomeAluno(relatorioEditar.nome_aluno());
         relatorios.setDesc_situacao(relatorioEditar.desc_situacao());
@@ -67,7 +64,7 @@ public class RelatoriosService {
     }
 
     public RelatoriosRespostasDTO buscarRelatorioId(Long id) {
-        Relatorios relatorios = relatorioRepository.findById(id).orElseThrow(() -> new RuntimeException("Relatorio nao encontrado!"));
+        Relatorios relatorios = relatorioRepository.findById(id).orElseThrow(() -> new IllegalArgumentException("Relatorio nao encontrado!"));
         RelatoriosRespostasDTO relatoriosRespostasDTO = new RelatoriosRespostasDTO(relatorios);
         return relatoriosRespostasDTO;
     }

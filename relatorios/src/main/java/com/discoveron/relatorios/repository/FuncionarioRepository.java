@@ -7,5 +7,5 @@ import java.util.List;
 
 public interface FuncionarioRepository extends JpaRepository<Funcionarios, Long> {
 
-    Funcionarios findByNome(String nome);
+    List<Funcionarios> findByNomeContainingIgnoreCase(String nome);
 }
