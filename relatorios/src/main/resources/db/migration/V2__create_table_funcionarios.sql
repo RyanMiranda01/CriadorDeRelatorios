@@ -4,7 +4,8 @@ CREATE TABLE funcionarios
     nome  VARCHAR(255),
     nivel VARCHAR(255),
     cargo VARCHAR(255),
-    PRIMARY KEY (id)
+    PRIMARY KEY (id),
+    ativo BOOLEAN NOT NULL
 );
 
 ALTER TABLE relatorios

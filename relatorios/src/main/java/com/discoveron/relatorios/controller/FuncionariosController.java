@@ -32,6 +32,8 @@ public class FuncionariosController {
                 .body(funcionariosRespostaDTO);
     }
 
+
+
     @PutMapping("/editarFunc/{id}")
     public ResponseEntity<Void> editarFuncionario(@Valid @RequestBody FuncionariosEditarDTO funcionariosEditarDTO, @PathVariable Long id){
         funcionarioService.editarFuncionario(funcionariosEditarDTO, id);

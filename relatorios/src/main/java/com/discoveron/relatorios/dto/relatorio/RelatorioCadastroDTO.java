@@ -13,7 +13,7 @@ public record RelatorioCadastroDTO(
         @NotBlank
         String turma,
         @NotNull
-        Funcionarios funcionarios_id,
+        Long funcionarios_id,
         @NotBlank
         String motivo,
         @NotBlank
@@ -25,7 +25,7 @@ public record RelatorioCadastroDTO(
 
 ) {
         public RelatorioCadastroDTO(Relatorios relatorios){
-                this(relatorios.getNomeAluno(), relatorios.getTurma(), relatorios.getFuncionarios(),relatorios.getMotivo(), relatorios.getDesc_situacao(), relatorios.getPeriodo(),relatorios.getProvidencia());
+                this(relatorios.getNomeAluno(), relatorios.getTurma(), relatorios.getFuncionarios().getId(),relatorios.getMotivo(), relatorios.getDesc_situacao(), relatorios.getPeriodo(),relatorios.getProvidencia());
         }
 
 

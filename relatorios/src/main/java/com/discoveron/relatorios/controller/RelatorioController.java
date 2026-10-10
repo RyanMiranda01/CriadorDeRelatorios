@@ -26,9 +26,9 @@ public class RelatorioController {
     }
 
     @PostMapping("/gerar")
-    public ResponseEntity<RelatorioCadastroDTO> salvarRelatorio(@Valid @RequestBody RelatorioCadastroDTO relatorioCadastroDTO){
+    public ResponseEntity<RelatoriosRespostasDTO> salvarRelatorio(@Valid @RequestBody RelatorioCadastroDTO relatorioCadastroDTO){
 
-        RelatorioCadastroDTO relatorioCadastroDTO1 = relatoriosService.cadastrarRelatorio(relatorioCadastroDTO);
+        RelatoriosRespostasDTO relatorioCadastroDTO1 = relatoriosService.cadastrarRelatorio(relatorioCadastroDTO);
 
         return ResponseEntity
                 .status(HttpStatus.CREATED)

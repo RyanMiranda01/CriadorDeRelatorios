@@ -1,21 +1,19 @@
 package com.discoveron.relatorios.dto.funcionarios;
 
-import com.discoveron.relatorios.domain.Ativo;
 import com.discoveron.relatorios.domain.Nivel;
+import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 
 public record FuncionarioCadastroDTO(
-        @NotNull
+        @NotBlank
         String nome,
-        @NotNull
+        @NotBlank
         String login,
-        @NotNull
+        @NotBlank
         String senha,
         @NotNull
         Nivel nivel,
-        @NotNull
-        String cargo,
-        @NotNull
-        Ativo ativo
+        @NotBlank
+        String cargo
 ) {
 }

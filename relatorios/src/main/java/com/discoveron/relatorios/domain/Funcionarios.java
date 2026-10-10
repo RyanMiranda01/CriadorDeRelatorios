@@ -24,8 +24,7 @@ public class Funcionarios {
     private String cargo;
     private String senha;
     private String login;
-    @Enumerated(EnumType.STRING)
-    private Ativo ativar;
+    private boolean ativo;
 
 
 }

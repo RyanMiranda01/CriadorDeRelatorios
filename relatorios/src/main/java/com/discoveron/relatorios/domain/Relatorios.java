@@ -34,10 +34,10 @@ public class Relatorios {
 
 
 
-    public Relatorios(@Valid RelatorioCadastroDTO relatorioCadastroDTO) {
+    public Relatorios(@Valid RelatorioCadastroDTO relatorioCadastroDTO, Funcionarios funcionarios) {
         this.nomeAluno = relatorioCadastroDTO.nome_aluno();
         this.turma = relatorioCadastroDTO.turma();
-        this.funcionarios = relatorioCadastroDTO.funcionarios_id();
+        this.funcionarios = funcionarios;
         this.periodo = relatorioCadastroDTO.periodo();
         this.motivo = relatorioCadastroDTO.motivo();
         this.desc_situacao = relatorioCadastroDTO.desc_situacao();

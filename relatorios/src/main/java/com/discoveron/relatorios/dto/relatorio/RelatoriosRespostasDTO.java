@@ -8,8 +8,9 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 
 public record RelatoriosRespostasDTO(
+        Long id,
         String nome_aluno,
-        Funcionarios nome_funcionario,
+        Long id_funcionario,
         String turma,
         String motivo,
         Periodo periodo,
@@ -19,8 +20,10 @@ public record RelatoriosRespostasDTO(
 
 ) {
     public RelatoriosRespostasDTO(Relatorios relatorios){
-        this(relatorios.getNomeAluno(),
-                relatorios.getFuncionarios(),
+        this(
+                relatorios.getId(),
+                relatorios.getNomeAluno(),
+                relatorios.getFuncionarios().getId(),
                 relatorios.getTurma(),
                 relatorios.getMotivo(),
                 relatorios.getPeriodo(),

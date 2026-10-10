@@ -1,10 +1,12 @@
 package com.discoveron.relatorios.service;
 
+import com.discoveron.relatorios.domain.Funcionarios;
 import com.discoveron.relatorios.domain.Periodo;
 import com.discoveron.relatorios.domain.Relatorios;
 import com.discoveron.relatorios.dto.relatorio.RelatorioCadastroDTO;
 import com.discoveron.relatorios.dto.relatorio.RelatorioEditar;
 import com.discoveron.relatorios.dto.relatorio.RelatoriosRespostasDTO;
+import com.discoveron.relatorios.repository.FuncionarioRepository;
 import com.discoveron.relatorios.repository.RelatorioRepository;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
@@ -22,15 +24,19 @@ import java.util.List;
 public class RelatoriosService {
 
     private final RelatorioRepository relatorioRepository;
+    private final FuncionarioRepository funcionarioRepository;
 
-    public RelatoriosService(RelatorioRepository relatorioRepository) {
+    public RelatoriosService(RelatorioRepository relatorioRepository, FuncionarioRepository funcionarioRepository) {
         this.relatorioRepository = relatorioRepository;
+        this.funcionarioRepository = funcionarioRepository;
     }
 
-    public RelatorioCadastroDTO cadastrarRelatorio(@Valid RelatorioCadastroDTO relatorioCadastroDTO) {
-        Relatorios relatorios = new Relatorios(relatorioCadastroDTO);
+    public RelatoriosRespostasDTO cadastrarRelatorio(@Valid RelatorioCadastroDTO relatorioCadastroDTO) {
+
+        Funcionarios funcionarios = funcionarioRepository.getReferenceById(relatorioCadastroDTO.funcionarios_id());
+        Relatorios relatorios = new Relatorios(relatorioCadastroDTO, funcionarios);
         Relatorios relatorioAtualizado = relatorioRepository.save(relatorios);
-        RelatorioCadastroDTO cadastroDTO = new RelatorioCadastroDTO(relatorioAtualizado);
+        RelatoriosRespostasDTO cadastroDTO = new RelatoriosRespostasDTO(relatorioAtualizado);
         return cadastroDTO;
     }
 
@@ -43,12 +49,11 @@ public class RelatoriosService {
             RelatoriosRespostasDTO relatoriosRespostasDTO = new RelatoriosRespostasDTO(relatorios);
             listaResposta.add(relatoriosRespostasDTO);
         }
-
         return listaResposta;
     }
 
     public RelatoriosRespostasDTO editarRelatorio(Long id, @Valid RelatorioEditar relatorioEditar) {
-        Relatorios relatorios = relatorioRepository.findById(id).orElseThrow(() -> new IllegalArgumentException("Relatorio nao encontrado!"));
+        Relatorios relatorios = relatorioRepository.findById(id).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Relatorio nao encontrado!"));
 
         relatorios.setNomeAluno(relatorioEditar.nome_aluno());
         relatorios.setDesc_situacao(relatorioEditar.desc_situacao());
@@ -63,8 +68,9 @@ public class RelatoriosService {
         return relatoriosRespostasDTO;
     }
 
+
     public RelatoriosRespostasDTO buscarRelatorioId(Long id) {
-        Relatorios relatorios = relatorioRepository.findById(id).orElseThrow(() -> new IllegalArgumentException("Relatorio nao encontrado!"));
+        Relatorios relatorios = relatorioRepository.findById(id).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Relatorio nao encontrado!"));
         RelatoriosRespostasDTO relatoriosRespostasDTO = new RelatoriosRespostasDTO(relatorios);
         return relatoriosRespostasDTO;
     }
@@ -108,6 +114,7 @@ public class RelatoriosService {
                 .map(RelatoriosRespostasDTO::new)
                 .toList();
     }
+
 
     public List<RelatoriosRespostasDTO> listarPorPeriodo(Periodo periodo) {
 
