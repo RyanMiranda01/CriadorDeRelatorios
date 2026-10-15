@@ -1,6 +1,7 @@
 package com.discoveron.relatorios.service;
 
 import com.discoveron.relatorios.domain.Funcionarios;
+import com.discoveron.relatorios.domain.Nivel;
 import com.discoveron.relatorios.domain.Periodo;
 import com.discoveron.relatorios.domain.Relatorios;
 import com.discoveron.relatorios.dto.relatorio.RelatorioCadastroDTO;
@@ -10,6 +11,8 @@ import com.discoveron.relatorios.repository.FuncionarioRepository;
 import com.discoveron.relatorios.repository.RelatorioRepository;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
@@ -17,10 +20,12 @@ import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.time.format.ResolverStyle;
-import java.util.ArrayList;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.security.authentication.AnonymousAuthenticationToken;
 import java.util.List;
 
 @Service
+@Transactional(readOnly = true)
 public class RelatoriosService {
 
     private final RelatorioRepository relatorioRepository;
@@ -31,9 +36,23 @@ public class RelatoriosService {
         this.funcionarioRepository = funcionarioRepository;
     }
 
+    @Transactional
     public RelatoriosRespostasDTO cadastrarRelatorio(@Valid RelatorioCadastroDTO relatorioCadastroDTO) {
 
-        Funcionarios funcionarios = funcionarioRepository.getReferenceById(relatorioCadastroDTO.funcionarios_id());
+        Funcionarios funcionarioLogado = buscarFuncionarioLogado();
+        Funcionarios funcionarios = funcionarioLogado;
+
+        if (funcionarioLogado.getNivel() == Nivel.ADMINISTRADOR
+                && relatorioCadastroDTO.funcionarios_id() != null) {
+            funcionarios = funcionarioRepository
+                    .findById(relatorioCadastroDTO.funcionarios_id())
+                    .orElseThrow(() -> new ResponseStatusException(
+                            HttpStatus.NOT_FOUND,
+                            "Funcionário não encontrado!"
+                    ));
+        }
+
+
         Relatorios relatorios = new Relatorios(relatorioCadastroDTO, funcionarios);
         Relatorios relatorioAtualizado = relatorioRepository.save(relatorios);
         RelatoriosRespostasDTO cadastroDTO = new RelatoriosRespostasDTO(relatorioAtualizado);
@@ -41,20 +60,37 @@ public class RelatoriosService {
     }
 
     public List<RelatoriosRespostasDTO> listarRelatorios() {
-
-        List<Relatorios> listaRelatorios = relatorioRepository.findAll();
-        List<RelatoriosRespostasDTO> listaResposta = new ArrayList<>();
-
-        for (Relatorios relatorios : listaRelatorios) {
-            RelatoriosRespostasDTO relatoriosRespostasDTO = new RelatoriosRespostasDTO(relatorios);
-            listaResposta.add(relatoriosRespostasDTO);
+        Funcionarios funcionarioLogado = buscarFuncionarioLogado();
+        List<Relatorios> relatorios;
+        if (funcionarioLogado.getNivel() == Nivel.PROFESSOR) {
+            relatorios = relatorioRepository.findByFuncionarios_Id(funcionarioLogado.getId()
+            );
+        } else {
+            relatorios = relatorioRepository.findAll();
         }
-        return listaResposta;
+
+        return relatorios.stream()
+                .map(RelatoriosRespostasDTO::new)
+                .toList();
     }
 
+    @Transactional
     public RelatoriosRespostasDTO editarRelatorio(Long id, @Valid RelatorioEditar relatorioEditar) {
         Relatorios relatorios = relatorioRepository.findById(id).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Relatorio nao encontrado!"));
 
+        Funcionarios funcionarioLogado = buscarFuncionarioLogado();
+
+        boolean administrador = funcionarioLogado.getNivel() == Nivel.ADMINISTRADOR;
+
+        boolean proprioRelatorio = relatorios.getFuncionarios().getId()
+                .equals(funcionarioLogado.getId());
+
+        if (!administrador && !proprioRelatorio) {
+            throw new ResponseStatusException(
+                    HttpStatus.FORBIDDEN,
+                    "Você só pode editar seus próprios relatórios."
+            );
+        }
         relatorios.setNomeAluno(relatorioEditar.nome_aluno());
         relatorios.setDesc_situacao(relatorioEditar.desc_situacao());
         relatorios.setMotivo(relatorioEditar.motivo());
@@ -70,14 +106,55 @@ public class RelatoriosService {
 
 
     public RelatoriosRespostasDTO buscarRelatorioId(Long id) {
-        Relatorios relatorios = relatorioRepository.findById(id).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Relatorio nao encontrado!"));
-        RelatoriosRespostasDTO relatoriosRespostasDTO = new RelatoriosRespostasDTO(relatorios);
-        return relatoriosRespostasDTO;
+        Funcionarios funcionarioLogado = buscarFuncionarioLogado();
+
+        Relatorios relatorio = relatorioRepository.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.NOT_FOUND,
+                        "Relatório não encontrado!"
+                ));
+
+        boolean professor = funcionarioLogado.getNivel() == Nivel.PROFESSOR;
+
+        boolean proprioRelatorio = relatorio.getFuncionarios().getId()
+                .equals(funcionarioLogado.getId());
+
+        if (professor && !proprioRelatorio) {
+            throw new ResponseStatusException(
+                    HttpStatus.NOT_FOUND,
+                    "Relatório não encontrado!"
+            );
+        }
+
+        return new RelatoriosRespostasDTO(relatorio);
     }
 
+    @Transactional
     public void deletarRelatorio(Long id) {
-        relatorioRepository.deleteById(id);
+        Funcionarios funcionarioLogado = buscarFuncionarioLogado();
+
+        Relatorios relatorio = relatorioRepository.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.NOT_FOUND,
+                        "Relatório não encontrado!"
+                ));
+
+        boolean administrador =
+                funcionarioLogado.getNivel() == Nivel.ADMINISTRADOR;
+
+        boolean proprioRelatorio = relatorio.getFuncionarios().getId()
+                .equals(funcionarioLogado.getId());
+
+        if (!administrador && !proprioRelatorio) {
+            throw new ResponseStatusException(
+                    HttpStatus.FORBIDDEN,
+                    "Você só pode excluir seus próprios relatórios."
+            );
+        }
+
+        relatorioRepository.delete(relatorio);
     }
+
 
 
     public List<RelatoriosRespostasDTO> listarPorData(String inicio, String fim) {
@@ -92,67 +169,131 @@ public class RelatoriosService {
         try {
             dataInicio = LocalDate.parse(inicio, formato);
             dataFim = LocalDate.parse(fim, formato);
+            if (dataInicio.isAfter(dataFim)) {
+                throw new ResponseStatusException(
+                        HttpStatus.BAD_REQUEST,
+                        "A data inicial deve ser anterior ou igual à final."
+                );
+            }
         } catch (DateTimeParseException e) {
             throw new ResponseStatusException(
                     HttpStatus.BAD_REQUEST,
                     "Informe datas válidas no formato dd/MM/yyyy."
             );
         }
+        if (dataInicio.getYear() < 1000 || dataFim.getYear() > 9999) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Informe anos entre 1000 e 9999.");
+        }
+        Funcionarios funcionarioLogado = buscarFuncionarioLogado();
 
-        if (dataInicio.isAfter(dataFim)) {
-            throw new ResponseStatusException(
-                    HttpStatus.BAD_REQUEST,
-                    "A data inicial deve ser anterior ou igual à final."
+        List<Relatorios> relatorios;
+
+        if (funcionarioLogado.getNivel() == Nivel.PROFESSOR) {
+            relatorios = relatorioRepository.buscarPorDataEFuncionario(
+                    dataInicio.atStartOfDay(),
+                    dataFim.plusDays(1).atStartOfDay(),
+                    funcionarioLogado.getId()
+            );
+        } else {
+            relatorios = relatorioRepository.buscarPorData(
+                    dataInicio.atStartOfDay(),
+                    dataFim.plusDays(1).atStartOfDay()
             );
         }
 
-        return relatorioRepository.buscarPorData(
-                        dataInicio.atStartOfDay(),
-                        dataFim.plusDays(1).atStartOfDay()
-                )
-                .stream()
+        return relatorios.stream()
                 .map(RelatoriosRespostasDTO::new)
                 .toList();
     }
 
 
     public List<RelatoriosRespostasDTO> listarPorPeriodo(Periodo periodo) {
-
-        List<Relatorios> listaRelatorios = relatorioRepository.findByPeriodo(periodo);
-        List<RelatoriosRespostasDTO> listaResposta = new ArrayList<>();
-
-        for (Relatorios relatorios : listaRelatorios) {
-            RelatoriosRespostasDTO relatoriosRespostasDTO = new RelatoriosRespostasDTO(relatorios);
-            listaResposta.add(relatoriosRespostasDTO);
+        Funcionarios funcionarioLogado = buscarFuncionarioLogado();
+        List<Relatorios> relatorios;
+        if (funcionarioLogado.getNivel() == Nivel.PROFESSOR) {
+            relatorios = relatorioRepository
+                    .findByPeriodoAndFuncionarios_Id(
+                            periodo,
+                            funcionarioLogado.getId()
+                    );
+        } else {
+            relatorios = relatorioRepository.findByPeriodo(periodo);
         }
 
-        return listaResposta;
+        return relatorios.stream()
+                .map(RelatoriosRespostasDTO::new)
+                .toList();
     }
 
     public List<RelatoriosRespostasDTO> listarPorFuncionario(String nomeF) {
+        Funcionarios funcionarioLogado = buscarFuncionarioLogado();
 
-        List<Relatorios> listaRelatorios = relatorioRepository.findByFuncionarios_NomeContainingIgnoreCase(nomeF);
-        List<RelatoriosRespostasDTO> listaResposta = new ArrayList<>();
+        List<Relatorios> relatorios;
 
-        for (Relatorios relatorios : listaRelatorios) {
-            RelatoriosRespostasDTO relatoriosRespostasDTO = new RelatoriosRespostasDTO(relatorios);
-            listaResposta.add(relatoriosRespostasDTO);
+        if (funcionarioLogado.getNivel() == Nivel.PROFESSOR) {
+            relatorios = relatorioRepository
+                    .findByFuncionarios_NomeContainingIgnoreCaseAndFuncionarios_Id(
+                            nomeF,
+                            funcionarioLogado.getId()
+                    );
+        } else {
+            relatorios = relatorioRepository
+                    .findByFuncionarios_NomeContainingIgnoreCase(nomeF);
         }
 
-        return listaResposta;
+        return relatorios.stream()
+                .map(RelatoriosRespostasDTO::new)
+                .toList();
     }
 
+
+
     public List<RelatoriosRespostasDTO> listarPorAluno(String aluno) {
+        Funcionarios funcionarioLogado = buscarFuncionarioLogado();
+
+        List<Relatorios> relatorios;
+
+        if (funcionarioLogado.getNivel() == Nivel.PROFESSOR) {
+            relatorios = relatorioRepository
+                    .findByNomeAlunoContainingIgnoreCaseAndFuncionarios_Id(
+                            aluno,
+                            funcionarioLogado.getId()
+                    );
+        } else {
+            relatorios = relatorioRepository
+                    .findByNomeAlunoContainingIgnoreCase(aluno);
+        }
+        return relatorios.stream()
+                .map(RelatoriosRespostasDTO::new)
+                .toList();
+    }
 
 
-        List<Relatorios> listaRelatorios = relatorioRepository.findByNomeAlunoContainingIgnoreCase(aluno);
-        List<RelatoriosRespostasDTO> listaResposta = new ArrayList<>();
+    private Funcionarios buscarFuncionarioLogado() {
+        Authentication autenticacao = SecurityContextHolder
+                .getContext()
+                .getAuthentication();
 
-        for (Relatorios relatorios : listaRelatorios) {
-            RelatoriosRespostasDTO relatoriosRespostasDTO = new RelatoriosRespostasDTO(relatorios);
-            listaResposta.add(relatoriosRespostasDTO);
+        if (autenticacao == null
+                || !autenticacao.isAuthenticated()
+                || autenticacao instanceof AnonymousAuthenticationToken) {
+            throw new ResponseStatusException(
+                    HttpStatus.UNAUTHORIZED,
+                    "É necessário fazer login."
+            );
         }
 
-        return listaResposta;
+        Funcionarios funcionario = funcionarioRepository.findByLogin(autenticacao.getName())
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.UNAUTHORIZED,
+                        "Funcionário autenticado não encontrado."
+                ));
+        if (!funcionario.isAtivo() || funcionario.getNivel() == null) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Funcionário sem acesso.");
+        }
+        if (funcionario.isTrocaSenhaObrigatoria()) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Troca de senha obrigatória.");
+        }
+        return funcionario;
     }
 }

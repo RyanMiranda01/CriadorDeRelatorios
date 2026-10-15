@@ -16,8 +16,8 @@ public class ValidarFuncionarioExistente {
 
     public void validarFuncionarioExistente(FuncionarioCadastroDTO funcionarios){
         if(funcionarioRepository.existsByLogin(funcionarios.login())){
-            throw new ResponseStatusException(HttpStatus.CONFLICT, "Login ja cdastrados!");
-        };
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Login já cadastrado!");
+        }
 
     }
 }

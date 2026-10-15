@@ -5,10 +5,12 @@ package com.discoveron.relatorios.controller;
 import com.discoveron.relatorios.dto.funcionarios.FuncionarioCadastroDTO;
 import com.discoveron.relatorios.dto.funcionarios.FuncionariosEditarDTO;
 import com.discoveron.relatorios.dto.funcionarios.FuncionariosRespostaDTO;
+import com.discoveron.relatorios.dto.funcionarios.TrocarSenhaDTO;
 import com.discoveron.relatorios.service.FuncionarioService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -70,16 +72,23 @@ public class FuncionariosController {
         return  ResponseEntity.ok("Senha resetada!!");
     }
 
-    /***
-     * LEMBRAR DE FAZER A VERIFICACAO NO JS PARA  VER SE O LOGIN E SENHA SAO IGUAIS PARA PODER ENTRAR NESSE METODO
-     * |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
-     * */
     @PutMapping("/criarNovaSenha/{id}")
-    public ResponseEntity<String> criarNovaSenha(@PathVariable Long id, @RequestBody String senha){
-        funcionarioService.criarNovaSenha(id, senha);
+    public ResponseEntity<String> criarNovaSenha(@PathVariable Long id, @Valid @RequestBody TrocarSenhaDTO dados){
+        funcionarioService.criarNovaSenha(id, dados.novaSenha());
 
         return ResponseEntity.ok("Senha cadastrada com sucesso!");
     }
 
+    @PutMapping("/minha-senha")
+    public ResponseEntity<Void> trocarPropriaSenha(
+            Authentication authentication,
+            @Valid @RequestBody TrocarSenhaDTO dados
+    ) {
+        funcionarioService.trocarPropriaSenha(
+                authentication.getName(),
+                dados
+        );
 
+        return ResponseEntity.noContent().build();
+    }
 }

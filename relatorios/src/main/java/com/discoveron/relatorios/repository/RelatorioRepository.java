@@ -30,4 +30,22 @@ public interface RelatorioRepository extends JpaRepository<Relatorios, Long> {
     List<Relatorios> findByFuncionarios_NomeContainingIgnoreCase(String funcionariosNome);
 
     List<Relatorios> findByNomeAlunoContainingIgnoreCase(String aluno);
+
+    List<Relatorios> findByFuncionarios_Id(Long funcionarioId);
+
+    List<Relatorios> findByPeriodoAndFuncionarios_Id(Periodo periodo, Long funcionarioId
+    );
+
+    List<Relatorios> findByNomeAlunoContainingIgnoreCaseAndFuncionarios_Id(String aluno, Long funcionarioId);
+
+    @Query("""
+    SELECT r FROM Relatorios r
+    WHERE r.data_criacao >= :inicio
+      AND r.data_criacao < :fim
+      AND r.funcionarios.id = :funcionarioId
+    ORDER BY r.data_criacao
+    """)
+    List<Relatorios> buscarPorDataEFuncionario(@Param("inicio") LocalDateTime inicio, @Param("fim") LocalDateTime fim, @Param("funcionarioId") Long funcionarioId);
+
+    List<Relatorios> findByFuncionarios_NomeContainingIgnoreCaseAndFuncionarios_Id(String nome, Long funcionarioId);
 }

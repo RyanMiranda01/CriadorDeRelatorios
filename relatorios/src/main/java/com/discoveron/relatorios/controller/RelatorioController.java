@@ -1,6 +1,5 @@
 package com.discoveron.relatorios.controller;
 
-import com.discoveron.relatorios.domain.Funcionarios;
 import com.discoveron.relatorios.domain.Periodo;
 import com.discoveron.relatorios.dto.relatorio.RelatorioCadastroDTO;
 import com.discoveron.relatorios.dto.relatorio.RelatorioEditar;
@@ -11,8 +10,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.util.List;
 
 @RestController
