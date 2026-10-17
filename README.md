@@ -29,7 +29,3 @@ As instruções de execução estão nos arquivos README de cada pasta.
 Desenvolvi o backend, incluindo entidades, DTOs, controllers, services, repositories, endpoints, filtros de consulta e migrations do banco de dados.
 
 O ChatGPT/Codex foi utilizado para implementar o frontend e os recursos de segurança, incluindo autenticação, permissões por perfil e fluxos de troca de senha.
-
-## Demonstração
-
-Vídeo: [adicione o link do vídeo]
